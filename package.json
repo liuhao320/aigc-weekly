@@ -10,8 +10,8 @@
   },
   "scripts": {
     "clean": "rimraf .next && rimraf .open-next && rimraf ./data/app",
-    "predev:agent": "mkdir -p ./data/app && ln -sf \"$PWD/agent/.claude\" \"$PWD/data/app\"",
-    "dev:agent": "tsx --watch --ignore 'data/**' --ignore '.env*' agent/index.ts",
+    "predev:agent": "mkdir -p ./data/app && (test -L ./data/app/.claude || ln -sf \"$PWD/agent/.claude\" \"$PWD/data/app\")",
+    "dev:agent": "tsx --watch agent/index.ts",
     "debug:agent": "cross-env DEBUG=true npm run -s dev:agent",
     "build:agent": "tsdown agent/index.ts",
     "dev:worker": "wrangler dev --cwd worker --persist-to ../.wrangler/state",
