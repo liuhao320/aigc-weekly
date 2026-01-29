@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^7.0.1",
+    "@anthropic-ai/sdk": "^0.38.1",
     "@cloudflare/containers": "^0.1.0",
     "@eslint-react/eslint-plugin": "^2.7.2",
     "@hono/node-server": "^1.19.9",
