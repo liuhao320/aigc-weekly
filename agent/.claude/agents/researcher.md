@@ -44,24 +44,32 @@ timezone: UTC+0
     - 针对需要动态日期的 URL（如 Hacker News），使用 `.claude/utils.js` 中的 `generateHNUrls(start_date, end_date)` 生成 URL 列表
     - **Hacker News 处理**：为 `start_date` 到 `end_date` 之间的每一天生成 URL
 
-3.  **并发执行 (Parallel Execution)**：
-    - 使用 `Task` 工具，**一次性**发起多个 `crawler` 子任务
+3.  **分批并发执行 (Batched Parallel Execution)**：
+    - **必须分批执行**：每批最多 3 个任务，避免 API 限流
+    - 使用 `Task` 工具发起 `crawler` 子任务
     - **每个任务必须包含完整的参数块**
+    - **执行策略**：
+      - 第一批：启动 3 个任务
+      - 等待第一批全部完成
+      - 第二批：启动下 3 个任务
+      - 依此类推，直到所有源都处理完毕
     - 示例：
 
       ````
+      # 第一批（3个任务）
       Task(subagent_type='crawler', prompt='''
       抓取 https://news.ycombinator.com/front?day=2026-03-25
 
-           ```yaml
-           # 周刊参数（请原样传递）
-
+      ```yaml
+      # 周刊参数（请原样传递）
       week_id: Y26W12
       start_date: 2026-03-22
       end_date: 2026-03-28
       timezone: UTC+0
-      `      ''')
-      `
+      ```
+      ''')
+
+      # 等待第一批完成后再启动第二批
       ````
 
 4.  **结果验证与汇总**：
@@ -99,4 +107,9 @@ timezone: UTC+0
 
 - **时间严格性**：只抓取 `start_date` 至 `end_date` 范围内的内容（基于 UTC+0）
 - **错误容忍**：单个源的失败不应导致任务整体失败
-- **资源限制**：如果源的数量非常多 (>10)，可以分批次并行（每批 5-8 个）
+- **并发限制**：**严格限制每批最多 3 个并发任务**，避免触发 API 限流（429 错误）
+  - 第一批：3 个任务
+  - 等待全部完成
+  - 第二批：3 个任务
+  - 以此类推
+  - **绝对禁止**一次性启动超过 3 个任务
