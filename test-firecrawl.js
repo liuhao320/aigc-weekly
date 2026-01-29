@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
@@ -16,8 +17,29 @@ if (result.error) {
 console.info('✅ 已加载', Object.keys(result.parsed || {}).length, '个环境变量')
 console.info('')
 
+// Load MCP configuration
+const mcpConfigPath = path.resolve(__dirname, 'agent/mcp.json')
+const mcpConfigRaw = fs.readFileSync(mcpConfigPath, 'utf-8')
+const mcpConfig = JSON.parse(mcpConfigRaw)
+
+// Replace environment variables in MCP config
+const mcpServersProcessed = {}
+for (const [name, config] of Object.entries(mcpConfig.mcpServers)) {
+  if (config.url) {
+    // Replace ${ENV_VAR} with actual value
+    config.url = config.url.replace(/\$\{(\w+)\}/g, (_, varName) => {
+      return process.env[varName] || ''
+    })
+  }
+  mcpServersProcessed[name] = config
+}
+
+console.info('🔍 MCP 配置:')
+console.info('  Firecrawl URL:', `${mcpServersProcessed.firecrawl?.url?.substring(0, 50)}...`)
+console.info('')
+
 // Display configuration
-console.info('🔍 当前配置:')
+console.info('🔍 环境变量:')
 console.info('  FIRECRAWL_API_KEY:', `${process.env.FIRECRAWL_API_KEY?.substring(0, 8)}...`)
 console.info('')
 
@@ -47,6 +69,7 @@ https://www.anthropic.com/news
 注意: 只使用 Firecrawl MCP 工具,不要使用其他工具。`,
       options: {
         cwd: process.cwd(),
+        mcpServers: mcpServersProcessed,
         allowDangerouslySkipPermissions: true,
         permissionMode: 'bypassPermissions',
       },
