@@ -15,18 +15,15 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
-# 检查 pnpm
-if ! command -v pnpm &> /dev/null; then
-    echo "📦 正在安装 pnpm..."
-    npm install -g pnpm
-fi
-
 echo "✅ 环境检查通过"
 echo ""
 
+# 使用 npx 运行 pnpm（不需要全局安装）
+PNPM="npx pnpm"
+
 # 安装依赖
-echo "📦 安装依赖..."
-pnpm install
+echo "📦 安装依赖（首次运行可能需要几分钟）..."
+$PNPM install
 echo ""
 
 # 配置环境变量
@@ -72,7 +69,7 @@ echo ""
 
 # 生成类型
 echo "🔧 生成类型文件..."
-pnpm generate:types
+$PNPM generate:types
 echo ""
 
 echo "✅ 安装完成！"
@@ -83,13 +80,13 @@ echo ""
 echo "1️⃣  编辑 worker/.env.local 填入你的 API Keys"
 echo ""
 echo "2️⃣  启动 Agent 服务："
-echo "   pnpm dev:agent"
+echo "   npx pnpm dev:agent"
 echo ""
 echo "3️⃣  在新终端窗口生成周刊："
-echo "   pnpm weekly"
+echo "   npx pnpm weekly"
 echo ""
 echo "4️⃣  或启动网页查看："
-echo "   pnpm dev"
+echo "   npx pnpm dev"
 echo "   访问 http://localhost:3000"
 echo ""
 echo "================================"
