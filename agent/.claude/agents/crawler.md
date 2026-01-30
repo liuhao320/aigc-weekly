@@ -79,20 +79,22 @@ timezone: UTC+0
 
 ## 重试机制
 
-对于可重试错误（429/5xx/超时），执行以下重试策略：
+**⚠️ 重要：必须为可重试错误执行重试策略**
 
-1. **首次失败**：等待 2 秒后重试
-2. **二次失败**：等待 8 秒后重试（指数退避）
-3. **三次失败**：记录错误并跳过，**不再重试**
+对于可重试错误（429/5xx/超时），**必须执行**以下重试策略：
 
-**可重试错误**：
+1. **首次失败**：等待 2 秒后重试（retry_count = 1）
+2. **二次失败**：等待 8 秒后重试（retry_count = 2，指数退避）
+3. **三次失败**：记录错误并跳过，**不再重试**（retry_count = 2）
+
+**可重试错误**（必须重试）：
 
 - HTTP 429 (Too Many Requests)
-- HTTP 5xx (服务器错误)
+- **HTTP 5xx (包括 500, 502, 503, 504 等所有服务器错误)**
 - 超时 (Timeout)
 - 网络错误 (Network Error)
 
-**不可重试错误**（直接跳过）：
+**不可重试错误**（直接跳过，retry_count = 0）：
 
 - HTTP 403 (Forbidden)
 - HTTP 404 (Not Found)
@@ -137,18 +139,24 @@ timezone: UTC+0
 
 # 失败记录
 
-如果最终抓取失败，记录以下信息到 `logs/crawl-failures.jsonl`（追加模式）：
+**仅在所有重试尝试都失败后**，记录以下信息到 `logs/crawl-failures.jsonl`（追加模式）：
 
 ```json
 {
   "url": "https://example.com/article",
-  "error_code": "429",
-  "error_message": "Too Many Requests",
+  "error_code": "HTTP",
+  "error_message": "HTTP 503: Service Unavailable",
   "retry_count": 2,
   "timestamp": "2026-03-25T12:34:56Z",
   "week_id": "Y26W12"
 }
 ```
+
+**字段说明**：
+
+- `error_code`: 错误类型（"HTTP" / "TIMEOUT" / "NETWORK" / "PARSE"）
+- `retry_count`: 实际执行的重试次数（可重试错误应为 2，不可重试错误为 0）
+- `timestamp`: ISO 8601 格式的 UTC 时间
 
 # 输出格式
 
