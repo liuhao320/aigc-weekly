@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# AIGC Weekly 一键生成脚本
+#
+# 用法：
+#   bash generate-weekly.sh           # 静默模式（后台运行，日志写入文件）
+#   bash generate-weekly.sh --verbose # 详细模式（前台运行，显示所有日志）
+#   bash generate-weekly.sh -v        # 详细模式（简写）
+#
+# 静默模式下查看实时日志：
+#   tail -f /tmp/agent-output.log
+
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -7,8 +17,17 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# 解析命令行参数
+VERBOSE=false
+if [[ "$1" == "--verbose" ]] || [[ "$1" == "-v" ]]; then
+    VERBOSE=true
+fi
+
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}  AIGC Weekly 一键生成脚本${NC}"
+if [ "$VERBOSE" = true ]; then
+    echo -e "${GREEN}  (详细模式 - 显示实时日志)${NC}"
+fi
 echo -e "${GREEN}========================================${NC}\n"
 
 # 进入项目目录
@@ -29,32 +48,65 @@ if lsof -ti :$PORT >/dev/null 2>&1; then
 else
     echo -e "${YELLOW}正在启动 Agent 服务...${NC}"
 
-    # 后台启动 agent
-    npx pnpm dev:agent > /tmp/agent-output.log 2>&1 &
-    AGENT_PID=$!
+    if [ "$VERBOSE" = true ]; then
+        # Verbose 模式：前台运行，显示所有日志
+        echo -e "${YELLOW}提示：按 Ctrl+C 可停止（会自动清理）${NC}\n"
 
-    echo -e "${YELLOW}Agent PID: $AGENT_PID${NC}"
-    echo -e "${YELLOW}等待服务启动（最多 30 秒）...${NC}"
+        # 使用 trap 捕获 Ctrl+C
+        trap 'echo -e "\n${YELLOW}正在停止...${NC}"; kill $AGENT_PID 2>/dev/null; exit 0' INT
 
-    # 等待服务就绪
-    RETRY=0
-    MAX_RETRY=30
-    while [ $RETRY -lt $MAX_RETRY ]; do
-        if nc -z localhost $PORT 2>/dev/null; then
-            echo -e "${GREEN}✅ Agent 服务启动成功！${NC}\n"
-            AGENT_ALREADY_RUNNING=false
-            break
+        # 前台启动 agent
+        npx pnpm dev:agent &
+        AGENT_PID=$!
+        AGENT_ALREADY_RUNNING=false
+
+        # 等待服务就绪
+        echo -e "${YELLOW}等待服务启动（最多 30 秒）...${NC}"
+        RETRY=0
+        MAX_RETRY=30
+        while [ $RETRY -lt $MAX_RETRY ]; do
+            if nc -z localhost $PORT 2>/dev/null; then
+                echo -e "${GREEN}✅ Agent 服务启动成功！${NC}\n"
+                break
+            fi
+            sleep 1
+            RETRY=$((RETRY + 1))
+        done
+
+        if [ $RETRY -eq $MAX_RETRY ]; then
+            echo -e "\n${RED}❌ Agent 服务启动超时${NC}"
+            kill $AGENT_PID 2>/dev/null
+            exit 1
         fi
-        sleep 1
-        RETRY=$((RETRY + 1))
-        echo -n "."
-    done
+    else
+        # 静默模式：后台运行，日志写入文件
+        npx pnpm dev:agent > /tmp/agent-output.log 2>&1 &
+        AGENT_PID=$!
 
-    if [ $RETRY -eq $MAX_RETRY ]; then
-        echo -e "\n${RED}❌ Agent 服务启动超时${NC}"
-        echo -e "${YELLOW}查看日志：${NC}"
-        cat /tmp/agent-output.log
-        exit 1
+        echo -e "${YELLOW}Agent PID: $AGENT_PID${NC}"
+        echo -e "${YELLOW}等待服务启动（最多 30 秒）...${NC}"
+
+        # 等待服务就绪
+        RETRY=0
+        MAX_RETRY=30
+        while [ $RETRY -lt $MAX_RETRY ]; do
+            if nc -z localhost $PORT 2>/dev/null; then
+                echo -e "${GREEN}✅ Agent 服务启动成功！${NC}"
+                echo -e "${BLUE}💡 查看实时日志：${NC}tail -f /tmp/agent-output.log${NC}\n"
+                AGENT_ALREADY_RUNNING=false
+                break
+            fi
+            sleep 1
+            RETRY=$((RETRY + 1))
+            echo -n "."
+        done
+
+        if [ $RETRY -eq $MAX_RETRY ]; then
+            echo -e "\n${RED}❌ Agent 服务启动超时${NC}"
+            echo -e "${YELLOW}查看日志：${NC}"
+            cat /tmp/agent-output.log
+            exit 1
+        fi
     fi
 fi
 
@@ -68,7 +120,13 @@ echo -e "${GREEN}✅ 清理完成${NC}\n"
 # 步骤 3：发送生成请求
 echo -e "${BLUE}[步骤 3/5] 生成周刊...${NC}"
 echo -e "${YELLOW}提示：这可能需要 1-3 小时，请耐心等待${NC}"
-echo -e "${YELLOW}你可以在另一个终端运行以下命令查看进度：${NC}"
+
+if [ "$VERBOSE" = false ]; then
+    echo -e "${BLUE}💡 在另一个终端查看实时日志：${NC}"
+    echo -e "  ${GREEN}tail -f /tmp/agent-output.log${NC}"
+fi
+
+echo -e "${YELLOW}或者查看抓取进度：${NC}"
 echo -e "${YELLOW}  ls -lh data/app/drafts/  # 查看已抓取的文章${NC}\n"
 
 START_TIME=$(date +%s)
