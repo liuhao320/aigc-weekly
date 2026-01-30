@@ -27,20 +27,35 @@ timezone: UTC+0
 
 # 工具使用规范
 
-## 抓取工具
+## 抓取工具优先级
 
-**必须使用 Firecrawl MCP 工具，严禁使用其他工具！**
+**优先使用 Firecrawl，失败时自动降级：**
 
-- **单页抓取**：使用 `mcp__firecrawl__firecrawl_scrape` 工具
+### 1️⃣ 首选工具：Firecrawl MCP
+
+每个新 URL **必须优先尝试** Firecrawl：
+
+- **单页抓取**：`mcp__firecrawl__firecrawl_scrape`
   - 参数：`{"url": "目标URL", "formats": ["markdown"]}`
-- **多页抓取**：使用 `mcp__firecrawl__firecrawl_crawl` 工具
+  - 优点：更好的内容提取、支持 JS 渲染、绕过反爬虫
+- **多页抓取**：`mcp__firecrawl__firecrawl_crawl`
   - 适用于需要抓取整个网站或多个页面的情况
 
-**严格禁止**：
+### 2️⃣ 降级方案：WebFetch（仅当 Firecrawl 失败时）
 
-- ❌ 禁止使用 `WebFetch` 工具
-- ❌ 禁止使用任何其他抓取工具
-- ❌ 如果 Firecrawl MCP 不可用，报错并停止，不要自动切换到其他工具
+如果 Firecrawl 抓取失败（错误、超时、不可用），自动切换到 `WebFetch` 工具完成当前 URL 的抓取。
+
+### ⚠️ 重要：每个 URL 独立尝试
+
+**关键原则**：不要因为上一个 URL Firecrawl 失败就放弃使用！
+
+- **URL 1**：尝试 Firecrawl → 成功 ✅
+- **URL 2**：尝试 Firecrawl → 失败 ❌ → 使用 WebFetch ✅
+- **URL 3**：尝试 Firecrawl → 成功 ✅（不因 URL 2 失败而跳过）
+- **URL 4**：尝试 Firecrawl → 失败 ❌ → 使用 WebFetch ✅
+- 以此类推...
+
+每个页面都是**独立的抓取尝试**，始终优先使用 Firecrawl。
 
 ## 重试机制
 
