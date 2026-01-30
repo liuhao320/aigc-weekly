@@ -42,7 +42,10 @@ timezone: UTC+0
 在开始各阶段任务前，必须完成：
 
 1. 调用 `getWeekInfo()` 计算时间参数
-2. 创建 `drafts/` 目录（如不存在）
+2. 创建必要的目录（如不存在）：
+   - `drafts/` - 存放抓取的原始文章
+   - `logs/` - 存放日志和报告
+   - `weekly/` - 存放最终生成的周刊文件
 3. 生成参数块，用于传递给所有下游任务
 
 ## 工作流程
@@ -117,12 +120,12 @@ prompt: |
 # 周刊参数
 week_id: {weekInfo.weekId}
 title: {title}
-filename: {filename}
+filename: weekly/{filename}
 start_date: {weekInfo.startDate}
 end_date: {weekInfo.endDate}
 ```
 
-请基于 drafts.yaml 撰写周刊，保存为 {filename}。
+请基于 drafts.yaml 撰写周刊，保存到 weekly/ 目录，文件名为 {filename}。
 
 ```
 
@@ -135,7 +138,7 @@ end_date: {weekInfo.endDate}
 ```
 
 prompt: |
-审核周刊文件 {filename}。
+审核周刊文件 weekly/{filename}。
 
 ```yaml
 # 周刊参数
