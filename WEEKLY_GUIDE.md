@@ -4,7 +4,31 @@
 
 ## 快速开始
 
-### 1️⃣ 启动 Agent 服务（终端 1）
+### 🚀 方式 1：一键生成（推荐）
+
+**静默模式**（后台运行，适合长时间任务）：
+
+```bash
+bash generate-weekly.sh
+```
+
+脚本会自动完成所有步骤。查看实时日志：
+
+```bash
+tail -f /tmp/agent-output.log
+```
+
+**详细模式**（前台运行，显示所有日志）：
+
+```bash
+bash generate-weekly.sh --verbose
+# 或简写
+bash generate-weekly.sh -v
+```
+
+### 📋 方式 2：分步执行
+
+#### 1️⃣ 启动 Agent 服务（终端 1）
 
 ```bash
 bash start-agent.sh
@@ -22,7 +46,7 @@ npx pnpm dev:agent
 Server running at http://localhost:2442
 ```
 
-### 2️⃣ 生成周刊（终端 2 - 新开）
+#### 2️⃣ 生成周刊（终端 2 - 新开）
 
 ```bash
 bash run-weekly.sh
@@ -108,12 +132,15 @@ lsof -ti :2442 | xargs kill
 
 ## 脚本说明
 
-| 脚本                | 用途                               |
-| ------------------- | ---------------------------------- |
-| `start-agent.sh`    | 智能启动 Agent（自动处理端口占用） |
-| `run-weekly.sh`     | 生成周刊（含检查和统计）           |
-| `test-yesterday.sh` | 快速测试（仅抓取昨天的 HN）        |
-| `test-firecrawl.js` | 测试 Firecrawl MCP 连接            |
+| 脚本                 | 用途                                  |
+| -------------------- | ------------------------------------- |
+| `generate-weekly.sh` | 🌟 **一键生成**（自动启动+生成+清理） |
+| ├─ 静默模式          | `bash generate-weekly.sh`             |
+| └─ 详细模式          | `bash generate-weekly.sh --verbose`   |
+| `start-agent.sh`     | 智能启动 Agent（自动处理端口占用）    |
+| `run-weekly.sh`      | 生成周刊（需先启动 Agent）            |
+| `test-yesterday.sh`  | 快速测试（仅抓取昨天的 HN）           |
+| `test-firecrawl.js`  | 测试 Firecrawl MCP 连接               |
 
 ## 提交历史（本次会话）
 
@@ -121,3 +148,6 @@ lsof -ti :2442 | xargs kill
 - `49065f8` - 请求频率控制（2 秒间隔）
 - `c0acd52` - 修正 researcher 错误使用 Skill 工具
 - `077913e` - 增强版周刊生成脚本
+- `65693ac` - 智能启动脚本 + 使用指南
+- `796b3e2` - 一键生成周刊脚本
+- `f04df67` - 添加 verbose 模式支持
