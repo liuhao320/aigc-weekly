@@ -12,11 +12,13 @@ echo -e "${GREEN}=== AIGC Weekly 生成脚本 ===${NC}\n"
 echo -e "${YELLOW}[1/4] 检查 agent 服务状态...${NC}"
 if ! nc -z localhost 2442 2>/dev/null; then
     echo -e "${RED}❌ Agent 服务未运行！${NC}"
-    echo -e "${YELLOW}请先启动 agent 服务：${NC}"
+    echo -e "\n${YELLOW}请在新终端启动 agent 服务：${NC}"
+    echo -e "  ${GREEN}bash start-agent.sh${NC}"
+    echo -e "\n${YELLOW}或者手动启动：${NC}"
     echo -e "  npx pnpm dev:agent"
     echo -e "\n${YELLOW}等待看到 'Server running at http://localhost:2442' 后，${NC}"
-    echo -e "${YELLOW}在新终端运行：${NC}"
-    echo -e "  bash run-weekly.sh"
+    echo -e "${YELLOW}再回到此终端运行：${NC}"
+    echo -e "  ${GREEN}bash run-weekly.sh${NC}"
     exit 1
 fi
 echo -e "${GREEN}✅ Agent 服务正常运行 (端口 2442)${NC}\n"
