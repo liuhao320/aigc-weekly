@@ -70,8 +70,8 @@ app.post('/chat', async (c) => {
     try {
       for await (const message of result) {
         if (message.type === 'system' && message.subtype === 'init') {
-          await stream.write(JSON.stringify({ type: 'agent', resume: message.session_id }))
-          await stream.close()
+          await stream.write(`${JSON.stringify({ type: 'agent', resume: message.session_id })}\n`)
+          // 不要关闭流，让 Agent 继续执行
         }
 
         const log = JSON.stringify(message)
