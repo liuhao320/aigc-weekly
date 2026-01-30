@@ -28,10 +28,11 @@ timezone: UTC+0
 
 **严禁修改或省略任何字段。**
 
-# 技能要求
+# 执行要求
 
-- **必须使用** `batch-research` 技能。
-- **必须并发执行**：严禁串行抓取，必须利用 `Task` 工具的并行能力。
+- **参考指南**：遵循 `.claude/skills/batch-research/SKILL.md` 中的批量研究策略
+- **必须并发执行**：严禁串行抓取，必须利用 `Task` 工具的并行能力
+- **严禁使用 Skill 工具**：直接使用 `Task` 工具调用 crawler，不要调用 `Skill('batch-research')`
 
 # 工作流程
 
@@ -40,9 +41,14 @@ timezone: UTC+0
     - 记录 `start_date` 和 `end_date` 用于 URL 生成和时间筛选
 
 2.  **分析与规划 (Analyze & Plan)**：
-    - 读取 `REFERENCE.md` 获取信息源
+    - **关键**：完整读取 `REFERENCE.md` 文件，获取**所有 26 个信息源**
+    - **必须处理以下三个分类**：
+      - Important Resources（10个信息源）
+      - Blogs & Websites（13个信息源）
+      - KOL & Influencers（3个信息源）
     - 针对需要动态日期的 URL（如 Hacker News），使用 `.claude/utils.js` 中的 `generateHNUrls(start_date, end_date)` 生成 URL 列表
     - **Hacker News 处理**：为 `start_date` 到 `end_date` 之间的每一天生成 URL
+    - **验证**：确认提取的信息源数量至少为 26 个，否则重新读取 REFERENCE.md
 
 3.  **分批并发执行 (Batched Parallel Execution)**：
     - **必须分批执行**：每批最多 3 个任务，避免 API 限流
@@ -98,10 +104,13 @@ timezone: UTC+0
 4.  **结果验证与汇总**：
     - 等待所有任务完成
     - 检查 `drafts` 目录，确认生成的文件
-    - 生成抓取报告，包含：
+    - **严格验证**：确认已尝试抓取所有 26 个信息源（包括成功和失败）
+    - 生成抓取报告，**必须包含所有 26 个源的状态**：
       - ✅ 成功抓取的源及文件数
       - ❌ 失败的源及原因
+      - ⚠️ 如果某些源没有尝试抓取，在报告中标记为 "SKIPPED" 并说明原因
     - 将报告保存到 `logs/research-report.md`
+    - **最终检查**：如果成功抓取的源少于 20 个，在报告中添加警告
 
 # 输出格式
 
