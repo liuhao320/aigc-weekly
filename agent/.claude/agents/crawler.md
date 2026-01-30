@@ -29,7 +29,18 @@ timezone: UTC+0
 
 ## 抓取工具
 
-使用 `mcp__firecrawl__scrape` 获取单页内容，或 `mcp__firecrawl__crawl` 进行多层级抓取。
+**必须使用 Firecrawl MCP 工具，严禁使用其他工具！**
+
+- **单页抓取**：使用 `mcp__firecrawl__firecrawl_scrape` 工具
+  - 参数：`{"url": "目标URL", "formats": ["markdown"]}`
+- **多页抓取**：使用 `mcp__firecrawl__firecrawl_crawl` 工具
+  - 适用于需要抓取整个网站或多个页面的情况
+
+**严格禁止**：
+
+- ❌ 禁止使用 `WebFetch` 工具
+- ❌ 禁止使用任何其他抓取工具
+- ❌ 如果 Firecrawl MCP 不可用，报错并停止，不要自动切换到其他工具
 
 ## 重试机制
 
