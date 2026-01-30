@@ -57,6 +57,26 @@ timezone: UTC+0
 
 每个页面都是**独立的抓取尝试**，始终优先使用 Firecrawl。
 
+### 📊 请求频率控制
+
+**重要**：为避免触发 Firecrawl 频率限制，必须控制请求间隔：
+
+- **每次 Firecrawl 调用后等待 2 秒**
+- 适用于：`mcp__firecrawl__firecrawl_scrape` 和 `mcp__firecrawl__firecrawl_crawl`
+- 如果降级到 WebFetch，同样建议等待 1 秒
+
+**执行示例**：
+
+```
+1. 调用 Firecrawl 抓取 URL 1
+2. 等待 2 秒
+3. 调用 Firecrawl 抓取 URL 2
+4. 等待 2 秒
+5. 继续...
+```
+
+这个间隔可以有效避免 429 错误，特别是在列表页需要抓取多个详情页时。
+
 ## 重试机制
 
 对于可重试错误（429/5xx/超时），执行以下重试策略：
