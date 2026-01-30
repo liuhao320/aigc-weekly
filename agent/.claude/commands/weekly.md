@@ -57,6 +57,13 @@ timezone: UTC+0
 prompt: |
   收集本周 AIGC 相关资讯。
 
+  **重要**：必须读取 `.claude/REFERENCE.md` 文件获取所有信息源，包括：
+  - Important Resources（约10个）
+  - Blogs & Websites（约13个）
+  - KOL & Influencers（约3个）
+
+  总共应该抓取约 26-30 个信息源！不要遗漏任何源！
+
   ```yaml
   # 周刊参数（请原样传递给下游任务）
   week_id: {weekInfo.weekId}
@@ -66,9 +73,9 @@ prompt: |
   start_date: {weekInfo.startDate}
   end_date: {weekInfo.endDate}
   timezone: UTC+0
-````
+  ```
 
-请根据上述时间范围从信息源抓取内容，保存到 drafts/ 目录。
+  请根据上述时间范围从 **所有** 信息源抓取内容，保存到 drafts/ 目录。
 
 ```
 
@@ -147,3 +154,4 @@ end_date: {weekInfo.endDate}
 
 请务必一次性完成所有任务，过程中无需向我确认，向我呈现最终的周刊内容。
 ```
+````
