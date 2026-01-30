@@ -46,30 +46,53 @@ timezone: UTC+0
 
 3.  **分批并发执行 (Batched Parallel Execution)**：
     - **必须分批执行**：每批最多 3 个任务，避免 API 限流
-    - 使用 `Task` 工具发起 `crawler` 子任务
+    - **直接使用 `Task` 工具**发起 `crawler` 子任务
+    - **严禁使用 Skill 工具**：不要调用 `Skill('batch-research')`，这只是指南文档，不是可执行工具
     - **每个任务必须包含完整的参数块**
     - **执行策略**：
-      - 第一批：启动 3 个任务
-      - 等待第一批全部完成
-      - 第二批：启动下 3 个任务
+      - 第一批：在同一个消息中调用 3 次 Task 工具（并行启动）
+      - 等待第一批全部完成（会收到 3 个 tool_result）
+      - 第二批：在同一个消息中调用 3 次 Task 工具
       - 依此类推，直到所有源都处理完毕
-    - 示例：
+    - **正确示例**（在同一个消息中并行调用 3 个 Task 工具）：
 
       ````
-      # 第一批（3个任务）
-      Task(subagent_type='crawler', prompt='''
-      抓取 https://news.ycombinator.com/front?day=2026-03-25
+      我将启动第一批 3 个抓取任务：
+
+      [使用 Task 工具 #1]
+      subagent_type: crawler
+      prompt: 抓取 https://news.ycombinator.com/front?day=2026-03-25
 
       ```yaml
-      # 周刊参数（请原样传递）
       week_id: Y26W12
       start_date: 2026-03-22
       end_date: 2026-03-28
       timezone: UTC+0
       ```
-      ''')
 
-      # 等待第一批完成后再启动第二批
+      [使用 Task 工具 #2]
+      subagent_type: crawler
+      prompt: 抓取 https://www.anthropic.com/engineering
+
+      ```yaml
+      week_id: Y26W12
+      start_date: 2026-03-22
+      end_date: 2026-03-28
+      timezone: UTC+0
+      ```
+
+      [使用 Task 工具 #3]
+      subagent_type: crawler
+      prompt: 抓取 https://baoyu.io/
+
+      ```yaml
+      week_id: Y26W12
+      start_date: 2026-03-22
+      end_date: 2026-03-28
+      timezone: UTC+0
+      ```
+
+      # 等待第一批 3 个 tool_result 返回后，再启动第二批
       ````
 
 4.  **结果验证与汇总**：
