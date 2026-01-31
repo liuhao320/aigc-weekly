@@ -60,6 +60,14 @@
         "gpt-5.2": {
           "name": "GPT 5.2",
           "limit": { "context": 128000, "output": 64000 }
+        },
+        "deepseek-chat": {
+          "name": "DeepSeek Chat",
+          "limit": { "context": 64000, "output": 8000 }
+        },
+        "deepseek-reasoner": {
+          "name": "DeepSeek Reasoner",
+          "limit": { "context": 64000, "output": 8000 }
         }
       }
     },
