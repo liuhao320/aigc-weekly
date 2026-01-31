@@ -1,10 +1,9 @@
-import type { Options, SDKUserMessage } from '@anthropic-ai/claude-agent-sdk'
 import { Container, getContainer } from '@cloudflare/containers'
 import { env } from 'cloudflare:workers'
+import { processSSEStream } from './sse'
 
 const PORT = 2442
 
-// Cloudflare env can include non-string bindings; filter to container-friendly entries
 const containerEnv = Object.fromEntries(
   Object.entries(env).filter(([, value]) => typeof value === 'string'),
 )
@@ -12,6 +11,9 @@ const containerEnv = Object.fromEntries(
 export class AgentContainer extends Container {
   sleepAfter = '10m'
   defaultPort = PORT
+
+  private _watchPromise?: Promise<void>
+
   envVars = {
     ...containerEnv,
     PORT: PORT.toString(),
@@ -19,43 +21,58 @@ export class AgentContainer extends Container {
 
   async watchContainer() {
     try {
-      const res = await this.containerFetch(new Request('http://container/ws', { headers: { Upgrade: 'websocket' } }))
-      if (res.webSocket === null)
-        throw new Error('websocket server is faulty')
+      const res = await this.containerFetch('http://container/global/event')
+      const reader = res.body?.getReader()
+      if (reader) {
+        await processSSEStream(reader, (event) => {
+          const eventType = event.payload?.type
 
-      res.webSocket.addEventListener('message', (msg) => {
-        this.renewActivityTimeout()
-        console.info(msg.data)
-      })
-      res.webSocket.accept()
+          if (eventType === 'session.updated') {
+            this.renewActivityTimeout()
+            console.info('Renewed container activity timeout')
+          }
+
+          if (eventType !== 'message.part.updated') {
+            console.info('SSE event:', JSON.stringify(event.payload))
+          }
+        })
+      }
     }
     catch (error) {
-      console.error('Failed to connect to container WebSocket:', error)
+      console.error('SSE connection error:', error)
     }
   }
 
   override async onStart(): Promise<void> {
-    await this.watchContainer()
+    // 不 await，让 SSE 监听在后台运行，避免阻塞 blockConcurrencyWhile
+    this._watchPromise = this.watchContainer()
   }
-}
-
-export interface Payload {
-  prompt?: string | AsyncIterable<SDKUserMessage>
-  options?: Options
-}
-
-export async function chatWithContainerAgent(payload?: Payload) {
-  const container = getContainer(env.AGENT_CONTAINER)
-  return container.fetch('http://container/chat', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload ?? {}),
-  })
 }
 
 export async function forwardRequestToContainer(request: Request) {
   const container = getContainer(env.AGENT_CONTAINER)
+
   return container.fetch(request)
+}
+
+export async function triggerWeeklyTask() {
+  const container = getContainer(env.AGENT_CONTAINER)
+  const headers = { 'Content-Type': 'application/json' }
+
+  const createRes = await container.fetch(
+    'http://container/session',
+    { method: 'POST', headers, body: JSON.stringify({}) },
+  )
+  if (!createRes.ok)
+    throw new Error(`Failed to create session: ${createRes.status}`)
+
+  const session = await createRes.json() as { id: string }
+  console.info(`Created session: ${session.id}`)
+
+  container.fetch(
+    `http://container/session/${session.id}/command`,
+    { method: 'POST', headers, body: JSON.stringify({ command: 'weekly', arguments: '' }) },
+  )
+
+  console.info(`Weekly task triggered: ${session.id}`)
 }

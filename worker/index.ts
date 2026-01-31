@@ -1,25 +1,43 @@
-import type { Payload } from './container.js'
-import process from 'node:process'
-import { chatWithContainerAgent, forwardRequestToContainer } from './container.js'
+import { env } from 'cloudflare:workers'
+import { forwardRequestToContainer, triggerWeeklyTask } from './container'
 
-export { AgentContainer } from './container.js'
-export { ChatWorkflow } from './workflow.js'
+export { AgentContainer } from './container'
 
-const isProd = process.env.NODE_ENV === 'production'
+function verifyBasicAuth(request: Request): Response | null {
+  const username = env.SERVER_USERNAME
+  const password = env.SERVER_PASSWORD
+
+  if (!password) {
+    return null
+  }
+
+  const authorization = request.headers.get('Authorization')
+  if (!authorization?.startsWith('Basic ')) {
+    return new Response('Unauthorized', {
+      status: 401,
+      headers: { 'WWW-Authenticate': 'Basic realm="Agent"' },
+    })
+  }
+
+  const expected = btoa(`${username}:${password}`)
+  const provided = authorization.slice(6)
+
+  if (provided !== expected) {
+    return new Response('Unauthorized', { status: 401 })
+  }
+
+  return null
+}
+
+async function handleFetch(request: Request) {
+  const authError = verifyBasicAuth(request)
+  if (authError) {
+    return authError
+  }
+  return forwardRequestToContainer(request)
+}
 
 export default {
-  async fetch(request) {
-    if (isProd) {
-      return Response.redirect('https://aigc-weekly.agi.li', 302)
-    }
-    const { pathname } = new URL(request.url)
-    if (pathname === '/chat' && request.method === 'POST') {
-      const payload = await request.json() as Payload
-      return chatWithContainerAgent(payload)
-    }
-    return forwardRequestToContainer(request)
-  },
-  async scheduled() {
-    await chatWithContainerAgent()
-  },
+  fetch: handleFetch,
+  scheduled: triggerWeeklyTask,
 } satisfies ExportedHandler<Cloudflare.Env>

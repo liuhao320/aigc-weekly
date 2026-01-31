@@ -9,12 +9,8 @@
     "pnpm": "^10"
   },
   "scripts": {
-    "clean": "rimraf .next && rimraf .open-next && rimraf ./data/app",
-    "predev:agent": "mkdir -p ./data/app && ln -sf \"$PWD/agent/.claude\" \"$PWD/data/app\"",
-    "dev:agent": "tsx --watch agent/index.ts",
-    "debug:agent": "cross-env DEBUG=true npm run -s dev:agent",
-    "build:agent": "tsdown agent/index.ts",
-    "dev:worker": "wrangler dev --cwd worker --persist-to ../.wrangler/state",
+    "clean": "rimraf .next && rimraf .open-next",
+    "dev:worker": "wrangler dev --port 2442 --cwd worker --persist-to ../.wrangler/state",
     "deploy:worker": "wrangler deploy --cwd worker",
     "dev": "next dev",
     "start": "next start",
@@ -33,19 +29,14 @@
     "payload": "payload",
     "wrangler": "wrangler"
   },
-  "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.2.12"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@antfu/eslint-config": "^7.0.1",
     "@cloudflare/containers": "^0.1.0",
     "@eslint-react/eslint-plugin": "^2.7.2",
-    "@hono/node-server": "^1.19.9",
-    "@hono/node-ws": "^1.3.0",
     "@opennextjs/cloudflare": "^1.14.9",
     "@payloadcms/db-d1-sqlite": "^3.72.0",
     "@payloadcms/next": "^3.72.0",
-    "@payloadcms/plugin-mcp": "^3.72.0",
     "@payloadcms/richtext-lexical": "^3.72.0",
     "@payloadcms/storage-r2": "^3.72.0",
     "@payloadcms/translations": "^3.72.0",
@@ -62,7 +53,6 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.26",
     "graphql": "^16.12.0",
-    "hono": "^4.11.4",
     "lint-staged": "^16.2.7",
     "markdown-it-ts": "0.0.2-beta.7",
     "next": "^15.5.9",
@@ -73,8 +63,6 @@
     "rimraf": "^6.1.2",
     "rss": "^1.2.2",
     "simple-git-hooks": "^2.13.1",
-    "tsdown": "^0.20.0-beta.3",
-    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "wrangler": "^4.59.2"
   },

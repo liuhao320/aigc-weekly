@@ -22,13 +22,6 @@
       "0 23 * * 7"
     ]
   },
-  "workflows": [
-    {
-      "name": "aigc-weekly-workflow",
-      "binding": "CHAT_WORKFLOW",
-      "class_name": "ChatWorkflow"
-    }
-  ],
   "containers": [
     {
       "name": "aigc-weekly-container",

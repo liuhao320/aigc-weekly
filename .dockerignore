@@ -16,12 +16,8 @@ public
 worker
 
 *.ts
-*.mjs
 *.md
 *.jsonc
 *.local
 *.example
 *.log
-
-**/*.exe
-**/*.jar

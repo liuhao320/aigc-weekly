@@ -1,11 +1,11 @@
 import type { CloudflareContext } from '@opennextjs/cloudflare'
+import type { R2StorageOptions } from '@payloadcms/storage-r2'
 import type { GetPlatformProxyOptions } from 'wrangler'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { sqliteD1Adapter } from '@payloadcms/db-d1-sqlite'
-import { mcpPlugin } from '@payloadcms/plugin-mcp'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { r2Storage } from '@payloadcms/storage-r2'
 import { zh } from '@payloadcms/translations/languages/zh'
@@ -20,6 +20,8 @@ const dirname = path.dirname(filename)
 
 const isCLI = process.argv.some(value => value.match(/^(generate|migrate):?/))
 const isProduction = process.env.NODE_ENV === 'production'
+
+type PayloadR2Bucket = R2StorageOptions['bucket']
 
 const cloudflare = isCLI || !isProduction
   ? await getCloudflareContextFromWrangler()
@@ -48,15 +50,8 @@ export default buildConfig({
   }),
   plugins: [
     r2Storage({
-      bucket: cloudflare.env.R2,
+      bucket: cloudflare.env.R2 as unknown as PayloadR2Bucket,
       collections: { media: true },
-    }),
-    mcpPlugin({
-      collections: {
-        weekly: {
-          enabled: true,
-        },
-      },
     }),
   ],
 })
